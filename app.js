@@ -532,9 +532,11 @@ function isFormOpen() {
 
 function tick() {
   state.now = new Date();
-  if (isFormOpen()) {
+  const active = document.activeElement;
+  const activeIsFormField = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+  if (isFormOpen() || activeIsFormField) {
     // don't rebuild the whole screen — that would close any open date/time picker
-    // or lose focus on an input the person is currently filling in.
+    // (or a native picker that briefly steals focus) and lose whatever is being typed.
     const today = todayKey(state.now);
     const todayEntry = state.entries[today];
     const status = !todayEntry || !todayEntry.in ? "off"
@@ -553,14 +555,18 @@ function tick() {
 }
 setInterval(tick, 1000);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && !isFormOpen()) {
+  const active = document.activeElement;
+  const activeIsFormField = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+  if (document.visibilityState === "visible" && !isFormOpen() && !activeIsFormField) {
     state.now = new Date();
     state.entries = loadEntries();
     render();
   }
 });
 window.addEventListener("focus", () => {
-  if (!isFormOpen()) { state.now = new Date(); render(); }
+  const active = document.activeElement;
+  const activeIsFormField = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+  if (!isFormOpen() && !activeIsFormField) { state.now = new Date(); render(); }
 });
 
 // ---------- service worker registration ----------
