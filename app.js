@@ -302,7 +302,7 @@ function render() {
   // status card
   html += `<div class="card" style="border-color:${statusColor}">
     <div class="status-row"><span class="dot" style="background:${statusColor}"></span><span class="status-label" style="color:${statusColor}">${statusLabel}</span></div>
-    <div class="big-clock">${fmtHM(liveMinutes)}<span class="big-clock-seconds">${(status === "on" || status === "pause") ? " " + fmtSeconds(state.now) : ""}</span></div>
+    <div class="big-clock" id="big-clock">${fmtHM(liveMinutes)}<span class="big-clock-seconds">${(status === "on" || status === "pause") ? " " + fmtSeconds(state.now) : ""}</span></div>
     <div class="clock-caption">${todayEntry && todayEntry.in ? `Arrivée ${new Date(todayEntry.in).toLocaleTimeString("fr-FR").slice(0, 5)}` : "Pas encore pointé aujourd'hui"}${todayEntry && todayEntry.out ? ` · Départ ${new Date(todayEntry.out).toLocaleTimeString("fr-FR").slice(0, 5)}` : ""}</div>`;
 
   if (status === "off") {
@@ -526,15 +526,42 @@ function attachHandlers() {
 }
 
 // ---------- live clock + resync on foreground ----------
-setInterval(() => { state.now = new Date(); render(); }, 1000);
+function isFormOpen() {
+  return !!(state.addingManual || state.editingKey || state.showImportBox || state.confirmDelete);
+}
+
+function tick() {
+  state.now = new Date();
+  if (isFormOpen()) {
+    // don't rebuild the whole screen — that would close any open date/time picker
+    // or lose focus on an input the person is currently filling in.
+    const today = todayKey(state.now);
+    const todayEntry = state.entries[today];
+    const status = !todayEntry || !todayEntry.in ? "off"
+      : todayEntry.out ? "done"
+      : todayEntry.pauseIn && !todayEntry.pauseOut ? "pause"
+      : "on";
+    const clockEl = document.getElementById("big-clock");
+    if (clockEl && todayEntry) {
+      const liveMinutes = computeMinutes(todayEntry);
+      const secs = (status === "on" || status === "pause") ? " " + fmtSeconds(state.now) : "";
+      clockEl.innerHTML = `${fmtHM(liveMinutes)}<span class="big-clock-seconds">${secs}</span>`;
+    }
+    return;
+  }
+  render();
+}
+setInterval(tick, 1000);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
+  if (document.visibilityState === "visible" && !isFormOpen()) {
     state.now = new Date();
     state.entries = loadEntries();
     render();
   }
 });
-window.addEventListener("focus", () => { state.now = new Date(); render(); });
+window.addEventListener("focus", () => {
+  if (!isFormOpen()) { state.now = new Date(); render(); }
+});
 
 // ---------- service worker registration ----------
 if ("serviceWorker" in navigator) {
@@ -544,3 +571,4 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
+
