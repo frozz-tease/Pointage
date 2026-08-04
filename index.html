@@ -13,8 +13,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="stylesheet" href="./style.css" />
   <style>
+    #print-area { display: none; }
     @media print {
       body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 24px;
+        background: #fff;
+        color: #111;
+      }
+      #print-area h1 { font-size: 18px; margin-bottom: 2px; text-transform: capitalize; }
+      #print-area table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      #print-area th, #print-area td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+      #print-area th { background: #eee; }
     }
   </style>
 </head>
@@ -22,6 +38,7 @@
   <div id="app">
     <div id="app-content"></div>
   </div>
+  <div id="print-area"></div>
   <script src="./app.js"></script>
 </body>
 </html>
