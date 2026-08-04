@@ -206,6 +206,27 @@ function exportJSON() {
   downloadBlob(JSON.stringify(payload, null, 2), `pointage_sauvegarde_${todayKey(state.now)}.json`, "application/json");
 }
 function printMonth() {
+  const [calY, calM] = state.calendarMonth.split("-").map(Number);
+  const monthLabel = new Date(calY, calM - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const monthKeys = Object.keys(state.entries).filter((k) => monthKey(k) === state.calendarMonth).sort();
+  let total = 0;
+  const rows = monthKeys.map((k) => {
+    const e = state.entries[k];
+    const mins = computeMinutes(e);
+    total += mins;
+    const inT = e.in ? new Date(e.in).toLocaleTimeString("fr-FR").slice(0, 5) : "--:--";
+    const outT = e.out ? new Date(e.out).toLocaleTimeString("fr-FR").slice(0, 5) : "en cours";
+    const pIn = e.pauseIn ? new Date(e.pauseIn).toLocaleTimeString("fr-FR").slice(0, 5) : "--";
+    const pOut = e.pauseOut ? new Date(e.pauseOut).toLocaleTimeString("fr-FR").slice(0, 5) : "--";
+    return `<tr><td>${dayLabel(k)}</td><td>${inT}</td><td>${pIn}</td><td>${pOut}</td><td>${outT}</td><td>${fmtHM(mins)}</td><td>${esc(e.note || "")}</td></tr>`;
+  }).join("");
+  document.getElementById("print-area").innerHTML = `
+    <h1>Relevé d'heures — ${monthLabel}</h1>
+    <div>Total du mois : ${fmtHM(total)}</div>
+    <table>
+      <thead><tr><th>Jour</th><th>Arrivée</th><th>Pause début</th><th>Pause fin</th><th>Départ</th><th>Heures</th><th>Note</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="7">Aucune journée enregistrée ce mois-ci.</td></tr>`}</tbody>
+    </table>`;
   window.print();
 }
 function triggerImport() {
@@ -577,4 +598,3 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
-
