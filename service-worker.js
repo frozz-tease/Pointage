@@ -1,4 +1,4 @@
-const CACHE_NAME = "pointage-cache-v1";
+const CACHE_NAME = "pointage-cache-v2"; // bumped: invalidates the old stuck cache on every device
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,19 +25,18 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// cache-first for app shell, network-first fallback for everything else
+// network-first: always try to fetch the latest version; only fall back to the
+// cached copy if there's no connection. This is what makes updates actually
+// reach the phone instead of being stuck on whatever was cached the first time.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((res) => {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
-          return res;
-        })
-        .catch(() => cached);
-    })
+    fetch(event.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
