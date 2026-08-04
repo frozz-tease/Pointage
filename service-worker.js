@@ -1,9 +1,9 @@
-const CACHE_NAME = "pointage-cache-v2"; // bumped: invalidates the old stuck cache on every device
+const CACHE_NAME = "pointage-cache-v3"; // bump this number on every future update to force a refresh
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css",
-  "./app.js",
+  "./style.css?v=3",
+  "./app.js?v=3",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -26,8 +26,7 @@ self.addEventListener("activate", (event) => {
 });
 
 // network-first: always try to fetch the latest version; only fall back to the
-// cached copy if there's no connection. This is what makes updates actually
-// reach the phone instead of being stuck on whatever was cached the first time.
+// cached copy if there's no connection.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
