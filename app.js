@@ -76,7 +76,7 @@ const state = {
   entries: loadEntries(),
   now: new Date(),
   note: "",
-  viewMode: "list",
+  viewMode: "calendar",
   openHistory: true,
   calendarMonth: monthKey(todayKey()),
   editingKey: null,
